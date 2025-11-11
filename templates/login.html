@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎫 Support Tickets - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 50px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2d3748;
+            font-size: 0.95rem;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .password-field {
+            display: none;
+        }
+
+        .password-field.show {
+            display: block;
+        }
+
+        .btn-login {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: #fed7d7;
+            border-left: 4px solid #f56565;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #c53030;
+            font-weight: 500;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .role-info {
+            background: #ebf4ff;
+            border-left: 4px solid #4299e1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .role-info strong {
+            color: #2c5282;
+        }
+
+        .role-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">🎫</div>
+        <h1>Support Tickets</h1>
+        <p class="subtitle">Select your role to continue</p>
+
+        <div class="error-message" id="errorMessage">
+            Invalid password. Please try again.
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="role">Select Role</label>
+                <select id="role" name="role" required>
+                    <option value="">-- Choose Role --</option>
+                    <option value="user">👤 User (Submit Tickets)</option>
+                    <option value="admin">👨‍💼 Admin (Manage Tickets)</option>
+                </select>
+            </div>
+
+            <div class="form-group password-field" id="passwordField">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter admin password">
+            </div>
+
+            <button type="submit" class="btn-login">Continue</button>
+        </form>
+
+        <div class="role-info">
+            <div id="roleDescription">
+                <strong>💡 Select a role above to get started</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const roleSelect = document.getElementById('role');
+        const passwordField = document.getElementById('passwordField');
+        const passwordInput = document.getElementById('password');
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const roleDescription = document.getElementById('roleDescription');
+
+        // Role descriptions
+        const roleInfo = {
+            user: {
+                icon: '👤',
+                text: '<strong>User Role:</strong><br>• Submit new support tickets<br>• Describe issues and set priority<br>• No password required'
+            },
+            admin: {
+                icon: '👨‍💼',
+                text: '<strong>Admin Role:</strong><br>• View all tickets<br>• Edit ticket status and priority<br>• Delete tickets<br>• View dashboard and statistics<br>• Password required: admin@123'
+            }
+        };
+
+        // Show/hide password field based on role
+        roleSelect.addEventListener('change', function() {
+            const role = this.value;
+            
+            if (role === 'admin') {
+                passwordField.classList.add('show');
+                passwordInput.required = true;
+            } else {
+                passwordField.classList.remove('show');
+                passwordInput.required = false;
+                passwordInput.value = '';
+            }
+
+            // Update role description
+            if (role && roleInfo[role]) {
+                roleDescription.innerHTML = roleInfo[role].text;
+            } else {
+                roleDescription.innerHTML = '<strong>💡 Select a role above to get started</strong>';
+            }
+
+            // Hide error message
+            errorMessage.classList.remove('show');
+        });
+
+        // Handle form submission
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const role = roleSelect.value;
+            const password = passwordInput.value;
+
+            if (!role) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ role, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Redirect to main app
+                    window.location.href = '/';
+                } else {
+                    // Show error message
+                    errorMessage.textContent = data.message || 'Invalid credentials';
+                    errorMessage.classList.add('show');
+                    
+                    // Shake the password field
+                    if (role === 'admin') {
+                        passwordInput.value = '';
+                        passwordInput.focus();
+                    }
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                errorMessage.textContent = 'An error occurred. Please try again.';
+                errorMessage.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>
