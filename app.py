@@ -1,10 +1,11 @@
 import datetime
 import random
 import json
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_file
 from functools import wraps
 import pandas as pd
 import numpy as np
+import io
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here-change-in-production'
@@ -235,7 +236,7 @@ def add_ticket():
     """Add a new ticket"""
     global df
     data = request.json
-    print(f"📥 API: Received new ticket request: {data}")
+    print(f"API: Received new ticket request: {data}")
     
     # Reload to ensure we have latest data
     df = load_tickets()
@@ -267,7 +268,7 @@ def add_ticket():
     df = pd.concat([new_df, df], ignore_index=True)
     save_tickets()
     
-    print(f"✅ Ticket saved! Total tickets now: {len(df)}")
+    print(f"Ticket saved! Total tickets now: {len(df)}")
     
     return jsonify(new_ticket)
 
@@ -354,9 +355,68 @@ def get_statistics():
         "priority_counts": priority_counts
     }
     
-    print(f"📊 Statistics calculated for {len(df)} tickets")
+    print(f"Statistics calculated for {len(df)} tickets")
     
     return jsonify(stats)
+
+@app.route('/api/tickets/export', methods=['GET'])
+@admin_required
+def export_tickets():
+    """Export all tickets to Excel - Admin only"""
+    global df
+    
+    # Reload to ensure we have latest data
+    df = load_tickets()
+    
+    # Create a copy of the dataframe for export
+    export_df = df.copy()
+    
+    # Ensure all required columns are present and in the correct order
+    columns_order = [
+        'ID', 'Username', 'Department', 'Issue', 
+        'Status', 'Priority', 'Date Submitted', 'Company'
+    ]
+    
+    # Only include columns that exist in the dataframe
+    existing_columns = [col for col in columns_order if col in export_df.columns]
+    export_df = export_df[existing_columns]
+    
+    # Create Excel file in memory
+    output = io.BytesIO()
+    
+    # Use openpyxl engine for better Excel formatting
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        export_df.to_excel(writer, sheet_name='Tickets', index=False)
+        
+        # Get the workbook and worksheet
+        workbook = writer.book
+        worksheet = writer.sheets['Tickets']
+        
+        # Auto-adjust column widths
+        for column in worksheet.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = min(max_length + 2, 50)  # Cap at 50 characters
+            worksheet.column_dimensions[column_letter].width = adjusted_width
+    
+    output.seek(0)
+    
+    # Generate filename with current date
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    filename = f"tickets_export_{current_date}.xlsx"
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
