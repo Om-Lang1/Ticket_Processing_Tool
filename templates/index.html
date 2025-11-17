@@ -404,6 +404,34 @@
             cursor: not-allowed;
         }
 
+        .btn-export {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            display: inline-block;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+        }
+
+        .btn-export:active {
+            transform: translateY(0);
+        }
+
+        .btn-export:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .delete-message {
             background: #fed7d7;
             border-left: 4px solid #f56565;
@@ -588,7 +616,7 @@
                 <span class="role-badge" id="roleBadge">User</span>
                 <a href="/logout" class="btn-logout">Logout</a>
             </div>
-            <h1>🎫 TICKETING TOOL</h1>
+             <h1>🎫 TICKETING TOOL</h1>
             <!-- <p>
                 This app shows how you can build an internal tool with Flask. Here, we are 
                 implementing a support ticket workflow. The user can create a ticket, edit 
@@ -657,9 +685,14 @@
                         <span>Selected:</span>
                         <span class="selection-count" id="selectionCount">0</span>
                     </div>
-                    <button class="btn-delete" id="deleteBtn" onclick="deleteSelectedTickets()">
-                        🗑️ Delete Selected
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-export" id="exportBtn" onclick="exportToExcel()">
+                            📊 Export to Excel
+                        </button>
+                        <button class="btn-delete" id="deleteBtn" onclick="deleteSelectedTickets()">
+                            🗑️ Delete Selected
+                        </button>
+                    </div>
                 </div>
                 <div class="table-container">
                     <table id="ticketsTable">
@@ -1275,6 +1308,74 @@
             } catch (error) {
                 console.error('Error deleting tickets:', error);
                 alert('Error deleting tickets. Please try again.');
+            }
+        }
+
+        // Export tickets to Excel
+        async function exportToExcel() {
+            try {
+                console.log('📊 Exporting tickets to Excel...');
+                
+                // Show loading state on button
+                const exportBtn = document.getElementById('exportBtn');
+                const originalText = exportBtn.textContent;
+                exportBtn.textContent = '⏳ Exporting...';
+                exportBtn.disabled = true;
+                
+                const response = await fetch('/api/tickets/export', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    }
+                });
+                
+                if (response.ok) {
+                    // Get the filename from the response headers or create a default one
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = 'tickets_export.xlsx';
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1].replace(/['"]/g, '');
+                        }
+                    }
+                    
+                    // Create blob and download
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    
+                    // Show success message
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'alert alert-success';
+                    successMsg.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); padding: 15px 30px; background: #10b981; color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000;';
+                    successMsg.textContent = `✅ Excel file downloaded successfully!`;
+                    document.body.appendChild(successMsg);
+                    
+                    // Remove the alert after 3 seconds
+                    setTimeout(() => {
+                        successMsg.style.opacity = '0';
+                        setTimeout(() => successMsg.remove(), 300);
+                    }, 3000);
+                    
+                    console.log('✅ Excel export completed successfully');
+                } else {
+                    throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error('❌ Error exporting to Excel:', error);
+                alert('Error exporting to Excel. Please try again.');
+            } finally {
+                // Restore button state
+                const exportBtn = document.getElementById('exportBtn');
+                exportBtn.textContent = originalText;
+                exportBtn.disabled = false;
             }
         }
     </script>
